@@ -9,6 +9,7 @@ A lightweight Windows desktop app for voice-to-text transcription using Whisper.
 - 🎙️ **Voice Transcription** - Press a hotkey, speak, and see your words appear in any app
 - 📋 **Auto-Paste** - Transcribed text is automatically typed into the active application
 - ⚡ **Local Processing** - Runs Whisper locally on your machine - no internet required
+- 🚀 **GPU Acceleration** - Vulkan support for faster transcription on compatible GPUs
 - ⌨️ **Global Hotkey** - Works from anywhere, even when the app is minimized to the system tray
 - 📊 **VU Meter** - Visual audio level indicator during recording
 - 🌐 **Translation** - Optional translation to English using Whisper's built-in translation
