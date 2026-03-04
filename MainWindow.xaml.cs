@@ -13,6 +13,8 @@ using DrawingGraphics = System.Drawing.Graphics;
 using DrawingSolidBrush = System.Drawing.SolidBrush;
 using DrawingPen = System.Drawing.Pen;
 using Drawing2DSmoothingMode = System.Drawing.Drawing2D.SmoothingMode;
+using MediaBrushes = System.Windows.Media.Brushes;
+using MediaColor = System.Windows.Media.Color;
 
 namespace whisperMeOff;
 
@@ -20,10 +22,10 @@ public class ChatMessage
 {
     public string Sender { get; set; } = "";
     public string Message { get; set; } = "";
-    public SolidColorBrush BackgroundColor { get; set; } = Brushes.White;
-    public SolidColorBrush SenderColor { get; set; } = Brushes.Black;
-    public SolidColorBrush TextColor { get; set; } = Brushes.Black;
-    public HorizontalAlignment HorizontalAlignment { get; set; } = HorizontalAlignment.Left;
+    public SolidColorBrush BackgroundColor { get; set; } = MediaBrushes.White;
+    public SolidColorBrush SenderColor { get; set; } = MediaBrushes.Black;
+    public SolidColorBrush TextColor { get; set; } = MediaBrushes.Black;
+    public System.Windows.HorizontalAlignment HorizontalAlignment { get; set; } = System.Windows.HorizontalAlignment.Left;
 }
 
 public partial class MainWindow : Window
@@ -136,11 +138,11 @@ public partial class MainWindow : Window
             Sender = sender,
             Message = message,
             BackgroundColor = isAI 
-                ? new SolidColorBrush(Color.FromRgb(255, 255, 255)) 
-                : new SolidColorBrush(Color.FromRgb(220, 235, 250)), // Very faint blue
-            SenderColor = new SolidColorBrush(Color.FromRgb(0, 90, 158)), // Darker blue for sender name
-            TextColor = Brushes.Black, // Black font
-            HorizontalAlignment = isAI ? HorizontalAlignment.Left : HorizontalAlignment.Right
+                ? new SolidColorBrush(MediaColor.FromRgb(255, 255, 255)) 
+                : new SolidColorBrush(MediaColor.FromRgb(220, 235, 250)), // Very faint blue
+            SenderColor = new SolidColorBrush(MediaColor.FromRgb(0, 90, 158)), // Darker blue for sender name
+            TextColor = MediaBrushes.Black, // Black font
+            HorizontalAlignment = isAI ? System.Windows.HorizontalAlignment.Left : System.Windows.HorizontalAlignment.Right
         };
         _messages.Add(chatMessage);
         ChatMessages.ScrollIntoView(chatMessage);
@@ -245,7 +247,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void MessageInput_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void MessageInput_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == Key.Enter && !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {
@@ -336,7 +338,7 @@ public partial class MainWindow : Window
         var profileLabel = new TextBlock { Text = "Server Profile", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
         llmPanel.Children.Add(profileLabel);
         var profileComboBoxBorder = CreateBorder();
-        var profileComboBox = new ComboBox { IsEditable = true, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var profileComboBox = new ComboBox { IsEditable = true, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         profileComboBoxBorder.Child = profileComboBox;
         foreach (var profile in _settings.Profiles) profileComboBox.Items.Add(profile.Name);
         profileComboBox.SelectedIndex = _settings.SelectedProfileIndex;
@@ -346,7 +348,7 @@ public partial class MainWindow : Window
         var urlLabel = new TextBlock { Text = "Server URL", FontSize = 13, Margin = new Thickness(0, 15, 0, 6) };
         llmPanel.Children.Add(urlLabel);
         var urlBorder = CreateBorder();
-        var urlTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var urlTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         urlBorder.Child = urlTextBox;
         llmPanel.Children.Add(urlBorder);
 
@@ -354,7 +356,7 @@ public partial class MainWindow : Window
         var modelLabel = new TextBlock { Text = "Model Name", FontSize = 13, Margin = new Thickness(0, 15, 0, 6) };
         llmPanel.Children.Add(modelLabel);
         var modelBorder = CreateBorder();
-        var modelComboBox = new ComboBox { IsEditable = true, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var modelComboBox = new ComboBox { IsEditable = true, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         modelBorder.Child = modelComboBox;
         llmPanel.Children.Add(modelBorder);
 
@@ -362,7 +364,7 @@ public partial class MainWindow : Window
         var apiKeyLabel = new TextBlock { Text = "API Key (optional)", FontSize = 13, Margin = new Thickness(0, 15, 0, 6) };
         llmPanel.Children.Add(apiKeyLabel);
         var apiKeyBorder = CreateBorder();
-        var apiKeyTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var apiKeyTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         apiKeyBorder.Child = apiKeyTextBox;
         llmPanel.Children.Add(apiKeyBorder);
 
@@ -370,7 +372,7 @@ public partial class MainWindow : Window
         var tokenLabel = new TextBlock { Text = "Token (optional)", FontSize = 13, Margin = new Thickness(0, 15, 0, 6) };
         llmPanel.Children.Add(tokenLabel);
         var tokenBorder = CreateBorder();
-        var tokenTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var tokenTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         tokenBorder.Child = tokenTextBox;
         llmPanel.Children.Add(tokenBorder);
 
@@ -378,7 +380,7 @@ public partial class MainWindow : Window
         var agentIdLabel = new TextBlock { Text = "Agent ID (optional)", FontSize = 13, Margin = new Thickness(0, 15, 0, 6) };
         llmPanel.Children.Add(agentIdLabel);
         var agentIdBorder = CreateBorder();
-        var agentIdTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var agentIdTextBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         agentIdBorder.Child = agentIdTextBox;
         llmPanel.Children.Add(agentIdBorder);
         
@@ -417,7 +419,7 @@ public partial class MainWindow : Window
         var modelFolderLabel = new TextBlock { Text = "Model Folder", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
         whisperPanel.Children.Add(modelFolderLabel);
         var modelFolderBorder = CreateBorder();
-        var modelFolderBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var modelFolderBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         modelFolderBox.Text = _settings.WhisperModelFolder;
         modelFolderBorder.Child = modelFolderBox;
         whisperPanel.Children.Add(modelFolderBorder);
@@ -458,7 +460,7 @@ public partial class MainWindow : Window
         var micLabel = new TextBlock { Text = "Microphone Device", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
         audioPanel.Children.Add(micLabel);
         var micComboBoxBorder = CreateBorder();
-        var micComboBox = new ComboBox { IsEditable = false, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var micComboBox = new ComboBox { IsEditable = false, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0) };
         micComboBoxBorder.Child = micComboBox;
         
         micComboBox.Items.Add("(Default System Microphone)");
@@ -495,8 +497,8 @@ public partial class MainWindow : Window
         Border CreateBorder() => new Border 
         { 
             CornerRadius = new CornerRadius(6),
-            Background = Brushes.White,
-            BorderBrush = new SolidColorBrush(Color.FromRgb(224, 224, 224)),
+            Background = MediaBrushes.White,
+            BorderBrush = new SolidColorBrush(MediaColor.FromRgb(224, 224, 224)),
             BorderThickness = new Thickness(1),
             Margin = new Thickness(0, 0, 0, 0)
         };
@@ -626,18 +628,18 @@ public partial class MainWindow : Window
         var contentBorder = new Border
         {
             CornerRadius = new CornerRadius(12),
-            Background = Brushes.White,
+            Background = MediaBrushes.White,
             Margin = new Thickness(10)
         };
         contentBorder.Child = mainGrid;
         
         // Add a simple title bar with close button
-        var titleBar = new Grid { Height = 44, Background = new SolidColorBrush(Color.FromRgb(245, 245, 245)) };
+        var titleBar = new Grid { Height = 44, Background = new SolidColorBrush(MediaColor.FromRgb(245, 245, 245)) };
         titleBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         titleBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         
         var titleText = new TextBlock { Text = "Settings", FontSize = 14, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(15, 0, 0, 0) };
-        var closeButton = new Button { Content = "✕", Width = 44, Height = 44, Background = Brushes.Transparent, BorderThickness = new Thickness(0), FontSize = 16, Cursor = Cursors.Hand };
+        var closeButton = new Button { Content = "✕", Width = 44, Height = 44, Background = MediaBrushes.Transparent, BorderThickness = new Thickness(0), FontSize = 16, Cursor = Cursors.Hand };
         closeButton.Click += (s, args) => settingsWindow.Close();
         
         Grid.SetColumn(titleText, 0);
@@ -662,7 +664,7 @@ public partial class MainWindow : Window
     {
         var style = new Style(typeof(Button));
         style.Setters.Add(new Setter(Button.BackgroundProperty, new SolidColorBrush(Color.FromRgb(0, 120, 212))));
-        style.Setters.Add(new Setter(Button.ForegroundProperty, Brushes.White));
+        style.Setters.Add(new Setter(Button.ForegroundProperty, MediaBrushes.White));
         style.Setters.Add(new Setter(Button.BorderThicknessProperty, new Thickness(0)));
         style.Setters.Add(new Setter(Button.PaddingProperty, new Thickness(20, 12, 20, 12)));
         style.Setters.Add(new Setter(Button.FontSizeProperty, 14.0));
@@ -685,7 +687,7 @@ public partial class MainWindow : Window
     {
         var style = new Style(typeof(Button));
         style.Setters.Add(new Setter(Button.BackgroundProperty, new SolidColorBrush(Color.FromRgb(240, 240, 240))));
-        style.Setters.Add(new Setter(Button.ForegroundProperty, new SolidColorBrush(Color.FromRgb(60, 60, 60))));
+        style.Setters.Add(new Setter(Button.ForegroundProperty, new SolidColorBrush(MediaColor.FromRgb(60, 60, 60))));
         style.Setters.Add(new Setter(Button.BorderThicknessProperty, new Thickness(1)));
         style.Setters.Add(new Setter(Button.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(200, 200, 200))));
         style.Setters.Add(new Setter(Button.PaddingProperty, new Thickness(20, 12, 20, 12)));

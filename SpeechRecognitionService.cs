@@ -42,6 +42,7 @@ public class SpeechRecognitionService : IDisposable
     public event EventHandler<string>? TextRecognized;
     public event EventHandler? ListeningStarted;
     public event EventHandler? ListeningStopped;
+    public event EventHandler<int>? AudioLevelChanged;
 
     public bool IsListening => _isListening;
 
@@ -167,6 +168,7 @@ public class SpeechRecognitionService : IDisposable
     {
         // AudioLevel ranges from 0 to 100, -1 means no audio
         System.Diagnostics.Debug.WriteLine($"[Speech] Audio level: {e.AudioLevel}");
+        AudioLevelChanged?.Invoke(this, e.AudioLevel);
     }
 
     private void Recognizer_SpeechHypothesized(object? sender, SpeechHypothesizedEventArgs e)
@@ -278,6 +280,33 @@ public class SpeechRecognitionService : IDisposable
                 {
                     _waveWriter.Write(e.Buffer, 0, e.BytesRecorded);
                 }
+                
+                // Calculate audio level from the buffer
+                // Convert bytes to samples and calculate RMS
+                int bytesPerSample = _waveIn.WaveFormat.BitsPerSample / 8;
+                int sampleCount = e.BytesRecorded / bytesPerSample;
+                if (sampleCount > 0 && _waveIn.WaveFormat.BitsPerSample == 16) // 16-bit audio
+                {
+                    unsafe
+                    {
+                        fixed (byte* bufferPtr = e.Buffer)
+                        {
+                            short* samples = (short*)bufferPtr;
+                            double sum = 0;
+                            for (int i = 0; i < sampleCount; i++)
+                            {
+                                double sample = samples[i] / 32768.0; // Normalize to -1 to 1
+                                sum += sample * sample;
+                            }
+                            double rms = Math.Sqrt(sum / sampleCount);
+                            // Convert to 0-100 scale (logarithmic for better visual)
+                            int level = (int)(20 * Math.Log10(rms + 0.0001) + 60); // Shift and scale
+                            level = Math.Max(0, Math.Min(100, level)); // Clamp to 0-100
+                            AudioLevelChanged?.Invoke(this, level);
+                        }
+                    }
+                }
+                
                 // Check if stop was requested
                 if (_stopRecordingRequested)
                 {
