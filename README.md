@@ -1,23 +1,23 @@
 # whisperMeOff
 
-A modern desktop chat application for local AI models. Connect to Ollama, LM Studio, Jan AI, or any OpenAI-compatible API server to chat with AI models running locally on your machine.
+A lightweight Windows desktop app for voice-to-text transcription using Whisper. Press a hotkey, speak, and your words are automatically typed into any application.
 
 ![whisperMeOff Screenshot](https://via.placeholder.com/800x450?text=whisperMeOff+Screenshot)
 
 ## Features
 
-- 🔌 **Multiple Server Support** - Connect to Ollama, LM Studio, Jan AI, or any OpenAI-compatible server
-- 💬 **Modern Chat Interface** - Clean, responsive UI with copyable messages
-- ⚙️ **Easy Configuration** - Simple settings dialog to configure server URL, model, and API key
-- 🔍 **Model Discovery** - Auto-detect available models from your server
-- ⌨️ **Keyboard Shortcuts** - Zoom in/out with Ctrl++ / Ctrl+-
-- 💾 **Persistent Settings** - Remembers your configuration between sessions
+- 🎙️ **Voice Transcription** - Press a hotkey, speak, and see your words appear in any app
+- 📋 **Auto-Paste** - Transcribed text is automatically typed into the active application
+- ⚡ **Local Processing** - Runs Whisper locally on your machine - no internet required
+- ⌨️ **Global Hotkey** - Works from anywhere, even when the app is minimized to the system tray
+- 📊 **VU Meter** - Visual audio level indicator during recording
+- 🌐 **Translation** - Optional translation to English using Whisper's built-in translation
 
 ## Requirements
 
 - Windows 10 or later
 - .NET 10.0 Runtime
-- A local AI server (Ollama, LM Studio, Jan AI, or similar)
+- A local Whisper model (downloaded within the app)
 
 ## Installation
 
@@ -43,50 +43,37 @@ A modern desktop chat application for local AI models. Connect to Ollama, LM Stu
 
 Download the latest release from the [Releases](https://github.com/bronder/whisperMeOff/releases) page.
 
-## Configuration
-
-### Ollama
-
-1. Ensure Ollama is running locally
-2. Open Settings (File > Settings)
-3. Select "Ollama" from the Server Profile dropdown
-4. The default URL should be `http://localhost:11434`
-5. Enter your model name (e.g., `llama3`, `mistral`)
-6. Click "Test Connection" to verify
-7. Click "Save"
-
-### LM Studio
-
-1. Ensure LM Studio is running
-2. Open Settings
-3. Select "LM Studio" from Server Profile
-4. The default URL is `http://localhost:1234/v1`
-5. Enter your model name
-6. Test and save
-
-### Jan AI
-
-1. Ensure Jan is running
-2. Open Settings
-3. Select "Jan AI" from Server Profile (or enter `http://localhost:1337/v1`)
-4. Enter your API key (if required - check Jan settings)
-5. Enter your model name
-6. Test and save
-
 ## Usage
 
-1. Launch the application
-2. Configure your AI server in Settings
-3. Type your message in the input box
-4. Press Enter or click Send
-5. Copy text from chat bubbles by selecting and pressing Ctrl+C
+1. Launch the application - it minimizes to the system tray
+2. Right-click the tray icon and select **Settings** to configure:
+   - **Whisper Tab**: Select and download a model size
+   - **Hotkey Tab**: Set your preferred global hotkey (default: Ctrl+Shift+R)
+   - **Audio Tab**: Select your microphone
+3. Press your hotkey to start recording
+4. Press it again to stop - your speech will be transcribed and typed into the previously focused app
 
-### Keyboard Shortcuts
+### Tray Icon
 
-- `Ctrl++` or `Ctrl+=` - Zoom in
-- `Ctrl+-` - Zoom out
-- `Enter` - Send message
-- `Shift+Enter` - New line in message
+- **Left-click**: Show/hide the main window
+- **Right-click**: Context menu with Show, Settings, and Exit options
+
+### Model Sizes
+
+| Model | Size | Description |
+|-------|------|-------------|
+| tiny | ~75 MB | Fastest, lowest accuracy |
+| base | ~150 MB | Good balance |
+| small | ~500 MB | Recommended default |
+| medium | ~1.5 GB | High accuracy, slower |
+
+## Configuration
+
+Settings are stored in `%APPDATA%\whisperMeOff\settings.json` and include:
+- Selected Whisper model and folder
+- Microphone device
+- Global hotkey configuration
+- Translation settings
 
 ## Building for Release
 
@@ -100,7 +87,8 @@ This will create a self-contained executable in `bin/Release/net10.0-windows/win
 
 - C# / .NET 10
 - WPF (Windows Presentation Foundation)
-- MaterialDesign Themes
+- [Whisper.net](https://github.com/arianon/Whisper.net) - .NET bindings for Whisper
+- NAudio - Audio capture
 
 ## License
 
