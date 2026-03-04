@@ -18,6 +18,7 @@ A lightweight Windows desktop app for voice-to-text transcription using Whisper.
 - Windows 10 or later
 - .NET 10.0 Runtime
 - A local Whisper model (downloaded within the app)
+- Optional: GPU with Vulkan support for faster transcription
 
 ## Installation
 
@@ -86,10 +87,11 @@ This will create a self-contained executable in `bin/Release/net10.0-windows/win
 ## Coming Soon
 
 - [ ] **Push-to-talk** - Hold the hotkey to record, release to transcribe
+- [ ] **Real Time** - Hold the hotkey to record and perform real-time vs end of chat batch.
 - [ ] **Custom hotkeys** - Different hotkeys for different modes
 - [ ] **Punctuation control** - Choose how punctuation is added
 - [ ] **Dark/Light theme** - UI theme options
-- [ ] **theming** - UI theme options
+- [ ] **theming** - UI theming
 
 ## Technologies
 
