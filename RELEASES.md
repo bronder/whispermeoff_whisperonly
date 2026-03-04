@@ -1,4 +1,4 @@
-## whisperMeOff v1.0.0
+## whisperMeOff Season 1.1
 
 **Voice-to-text transcription using local Whisper models**
 
@@ -20,3 +20,9 @@
 
 ### First Release
 This is the initial release of whisperMeOff - a lightweight voice transcription app that runs Whisper locally on your machine.
+
+---
+
+## whisperMeOff v1.0.0
+
+**Voice-to-text transcription using local Whisper models**
