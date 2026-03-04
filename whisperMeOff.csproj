@@ -10,8 +10,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <PostBuildEvent>dotnet publish $(MSBuildProjectFile) -c Release -r win-x64 --self-contained true</PostBuildEvent>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(IsPublishing)' != 'true'">
+    <IsPublishing>true</IsPublishing>
+    <PostBuildEvent>dotnet publish $(MSBuildProjectDirectory)/$(MSBuildProjectFile) -c Release -p:IsPublishing=true -v detailed</PostBuildEvent>
   </PropertyGroup>
 
   <ItemGroup>
