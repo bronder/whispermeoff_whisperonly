@@ -1,10 +1,10 @@
 <Window x:Class="whisperMeOff.WhisperOnlyWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="whisperMeOff - Whisper Only"
-        Height="380" Width="500"
-        Background="#FAFAFA"
-        WindowStartupLocation="CenterScreen">
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="whisperMeOff - Whisper Only"
+    Height="310" Width="420"
+    Background="#FAFAFA"
+    WindowStartupLocation="CenterScreen">
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{x:Null}" CommandParameter="{Binding}"/>
     </Window.InputBindings>
@@ -37,28 +37,35 @@
             </Setter>
         </Style>
     </Window.Resources>
-    <Grid Margin="30">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Background="#FAFAFA" Padding="0">
+            <MenuItem Header="_File" FontSize="11" Padding="4,2">
+                <MenuItem Header="_Settings" Click="Settings_Click" FontSize="11" Padding="4,2"/>
+            </MenuItem>
+        </Menu>
+        <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Height="8"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="5"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="10"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="15"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Whisper Only Mode" FontSize="24" FontWeight="Bold" Foreground="#333333" HorizontalAlignment="Center"/>
-        <TextBlock Grid.Row="2" Text="Click the microphone button, press F5, or Ctrl+Shift+R to start voice recognition. The transcribed text will be copied to your clipboard automatically." FontSize="13" Foreground="#666666" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" MaxWidth="400"/>
+        <TextBlock Grid.Row="0" Text="Whisper Only Mode" FontSize="16" FontWeight="Bold" Foreground="#333333" HorizontalAlignment="Center"/>
+        <TextBlock Grid.Row="2" Text="Press F5 or Ctrl+Shift+R to start. Text is auto-copied." FontSize="10" Foreground="#666666" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" MaxWidth="350"/>
         
         <!-- VU Meter -->
-        <Grid Grid.Row="4" Margin="0,0,0,10">
-            <ProgressBar x:Name="VuMeter" Height="20" Minimum="0" Maximum="100" Value="0" 
+        <Grid Grid.Row="4" Margin="0,0,0,5">
+            <ProgressBar x:Name="VuMeter" Height="12" Minimum="0" Maximum="100" Value="0" 
                         Background="#E0E0E0" Foreground="#0078D4" BorderThickness="0"/>
         </Grid>
         
-        <TextBlock x:Name="StatusText" Grid.Row="6" Text="Ready" FontSize="14" Foreground="#666666" HorizontalAlignment="Center"/>
-        <Button x:Name="MicButton" Grid.Row="8" Style="{StaticResource ModernButton}" Content="MIC" Click="MicButton_Click" Width="100" Height="100" FontSize="24" ToolTip="Click or press F5 to start voice input"/>
+        <TextBlock x:Name="StatusText" Grid.Row="6" Text="Ready" FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>
+        <Button x:Name="MicButton" Grid.Row="8" Style="{StaticResource ModernButton}" Content="MIC" Click="MicButton_Click" Width="80" Height="80" FontSize="20" ToolTip="Click or press F5 to start voice input"/>
     </Grid>
+    </DockPanel>
 </Window>
