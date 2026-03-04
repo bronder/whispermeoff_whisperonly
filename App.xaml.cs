@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Forms;
 using Application = System.Windows.Application;
@@ -13,6 +13,12 @@ public partial class App : System.Windows.Application
     private NotifyIcon? _notifyIcon;
     private WhisperOnlyWindow? _mainWindow;
 
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr LoadImage(IntPtr hInst, string name, uint type, int cx, int cy, uint fuLoad);
+
+    private const uint IMAGE_ICON = 1;
+    private const uint LR_LOADFROMFILE = 0x00000010;
+
     private void Application_Startup(object sender, StartupEventArgs e)
     {
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -22,7 +28,7 @@ public partial class App : System.Windows.Application
         {
             Text = "whisperMeOff",
             Visible = true,
-            Icon = CreateRobotIcon()
+            Icon = LoadIconFromResource()
         };
         
         // Create context menu
@@ -44,31 +50,31 @@ public partial class App : System.Windows.Application
         _mainWindow.Hide();
     }
 
-    private Icon CreateRobotIcon()
+    private Icon LoadIconFromResource()
     {
-        using var bitmap = new Bitmap(32, 32);
-        using var g = Graphics.FromImage(bitmap);
+        // Try to load flatrobot.ico from the application directory
+        var exeDir = AppDomain.CurrentDomain.BaseDirectory;
+        var iconPath = Path.Combine(exeDir, "flatrobot.ico");
         
-        // Background - blue
-        g.SmoothingMode = SmoothingMode.AntiAlias;
-        g.Clear(Color.FromArgb(0, 120, 212));
+        if (File.Exists(iconPath))
+        {
+            try
+            {
+                // Use native LoadImage to load the ICO file
+                var hIcon = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+                if (hIcon != IntPtr.Zero)
+                {
+                    return Icon.FromHandle(hIcon);
+                }
+            }
+            catch
+            {
+                // Fall back to default icon if loading fails
+            }
+        }
         
-        // Robot head - white
-        var headBrush = new SolidBrush(Color.White);
-        g.FillRectangle(headBrush, 6, 4, 20, 18);
-        
-        // Eyes
-        g.FillEllipse(new SolidBrush(Color.FromArgb(0, 120, 212)), 10, 9, 4, 4);
-        g.FillEllipse(new SolidBrush(Color.FromArgb(0, 120, 212)), 18, 9, 4, 4);
-        
-        // Mouth
-        g.DrawLine(new Pen(Color.FromArgb(0, 120, 212), 2), 11, 17, 21, 17);
-        
-        // Antenna
-        g.DrawLine(new Pen(Color.White, 2), 16, 4, 16, 1);
-        g.FillEllipse(headBrush, 14, 0, 4, 3);
-        
-        return Icon.FromHandle(bitmap.GetHicon());
+        // Return default system icon if file not found
+        return SystemIcons.Application;
     }
 
     private void ShowWindow()

@@ -5,6 +5,9 @@
 [Ll]og/
 [Ll]ogs/
 
+# Temporary build files
+*_wpftmp.csproj
+
 # Visual Studio files
 .vs/
 *.suo

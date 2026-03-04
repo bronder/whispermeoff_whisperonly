@@ -3,28 +3,8 @@ using System.Text.Json;
 
 namespace whisperMeOff;
 
-public class ServerProfile
-{
-    public string Name { get; set; } = "";
-    public string ServerUrl { get; set; } = "";
-    public string Model { get; set; } = "";
-    public string ApiKey { get; set; } = "";
-    public string Token { get; set; } = "";
-    public string AgentId { get; set; } = "";
-}
-
 public class AppSettings
 {
-    public List<ServerProfile> Profiles { get; set; } = new()
-    {
-        new ServerProfile { Name = "Ollama", ServerUrl = "http://localhost:11434", Model = "" },
-        new ServerProfile { Name = "LM Studio", ServerUrl = "http://localhost:1234/v1", Model = "" },
-        new ServerProfile { Name = "Jan AI", ServerUrl = "http://localhost:1337/v1", Model = "" },
-        new ServerProfile { Name = "OpenClaw", ServerUrl = "", Token = "", AgentId = "", Model = "" }
-    };
-    
-    public int SelectedProfileIndex { get; set; } = 0;
-    
     // Window position and size
     public double WindowLeft { get; set; } = double.NaN;
     public double WindowTop { get; set; } = double.NaN;
@@ -65,15 +45,7 @@ public class AppSettings
             if (File.Exists(SettingsFilePath))
             {
                 var json = File.ReadAllText(SettingsFilePath);
-                var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
-                
-                // Ensure OpenClaw profile exists
-                if (!settings.Profiles.Any(p => p.Name == "OpenClaw"))
-                {
-                    settings.Profiles.Add(new ServerProfile { Name = "OpenClaw", ServerUrl = "", Token = "", AgentId = "", Model = "" });
-                }
-                
-                return settings;
+                return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
             }
         }
         catch
