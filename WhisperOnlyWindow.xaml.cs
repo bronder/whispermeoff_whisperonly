@@ -30,12 +30,14 @@ public partial class WhisperOnlyWindow : Window
     private SpeechRecognitionService? _speechService;
     private bool _isRecording;
     private AppSettings _settings = new();
+    private VuMeterWindow? _vuMeterWindow;
     
     // Global hotkey constants
     private const int HOTKEY_ID = 9000;
     private const uint MOD_CONTROL = 0x0002;
     private const uint MOD_SHIFT = 0x0004;
-    private const uint VK_R = 0x52; // R key
+    private const uint MOD_ALT = 0x0001;
+    private const uint MOD_WIN = 0x0008;
     
     // For sending Ctrl+V paste
     [DllImport("user32.dll", SetLastError = true)]
@@ -61,9 +63,61 @@ public partial class WhisperOnlyWindow : Window
 
     private void WhisperOnlyWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        // Register Ctrl+Shift+R as global hotkey
+        // Register global hotkey from settings
+        RegisterGlobalHotkey();
+    }
+
+    private void RegisterGlobalHotkey()
+    {
         var helper = new System.Windows.Interop.WindowInteropHelper(this);
-        RegisterHotKey(helper.Handle, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, VK_R);
+        
+        // Ensure window is loaded
+        if (helper.Handle == IntPtr.Zero)
+        {
+            helper.EnsureHandle();
+        }
+        
+        // Unregister existing hotkey first
+        UnregisterHotKey(helper.Handle, HOTKEY_ID);
+        
+        // Build modifiers from settings
+        uint modifiers = 0;
+        if (_settings.HotkeyCtrl) modifiers |= MOD_CONTROL;
+        if (_settings.HotkeyShift) modifiers |= MOD_SHIFT;
+        if (_settings.HotkeyAlt) modifiers |= MOD_ALT;
+        if (_settings.HotkeyWin) modifiers |= MOD_WIN;
+        
+        // Get virtual key code from settings
+        uint vk = GetVirtualKeyCode(_settings.HotkeyKey);
+        
+        // Register the hotkey
+        RegisterHotKey(helper.Handle, HOTKEY_ID, modifiers, vk);
+    }
+
+    private uint GetVirtualKeyCode(string key)
+    {
+        // Common keys
+        if (key.Length == 1 && char.IsLetter(key[0]))
+            return (uint)char.ToUpper(key[0]);
+        
+        return key.ToUpper() switch
+        {
+            "NONE" => 0,
+            "R" => 0x52,
+            "F5" => 0x74,
+            "F6" => 0x75,
+            "F7" => 0x76,
+            "F8" => 0x77,
+            "F9" => 0x78,
+            "F10" => 0x79,
+            "F11" => 0x7A,
+            "F12" => 0x7B,
+            "SPACE" => 0x20,
+            "ENTER" => 0x0D,
+            "TAB" => 0x09,
+            "ESCAPE" => 0x1B,
+            _ => 0x52 // Default to R
+        };
     }
 
     private void WhisperOnlyWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -107,6 +161,7 @@ public partial class WhisperOnlyWindow : Window
         Dispatcher.Invoke(() =>
         {
             VuMeter.Value = level >= 0 ? level : 0;
+            _vuMeterWindow?.SetLevel(level >= 0 ? level : 0);
         });
     }
 
@@ -120,8 +175,15 @@ public partial class WhisperOnlyWindow : Window
             VuMeter.Value = 0;
             _speechService!.AudioLevelChanged -= SpeechService_AudioLevelChanged;
             _speechService?.StopRecognition();
+            _vuMeterWindow?.Close();
+            _vuMeterWindow = null;
             return;
         }
+
+        // Show floating VU meter
+        _vuMeterWindow = new VuMeterWindow();
+        _vuMeterWindow.PositionAtBottomMiddle();
+        _vuMeterWindow.Show();
 
         _isRecording = true;
         MicButton.Content = "STOP";
@@ -184,6 +246,8 @@ public partial class WhisperOnlyWindow : Window
             _isRecording = false;
             MicButton.Content = "MIC";
             VuMeter.Value = 0;
+            _vuMeterWindow?.Close();
+            _vuMeterWindow = null;
             if (_speechService != null)
             {
                 _speechService.AudioLevelChanged -= SpeechService_AudioLevelChanged;
@@ -294,7 +358,57 @@ public partial class WhisperOnlyWindow : Window
         whisperTab.Content = whisperPanel;
         tabControl.Items.Add(whisperTab);
 
-        // ============ TAB 2: Audio ============
+        // ============ TAB 2: Hotkey ============
+        var hotkeyTab = new TabItem { Header = "⌨️ Hotkey" };
+        var hotkeyPanel = new StackPanel { Margin = new Thickness(15) };
+        
+        var hotkeyLabel = new TextBlock { Text = "Global Hotkey", FontSize = 14, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) };
+        hotkeyPanel.Children.Add(hotkeyLabel);
+        
+        var modifierPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 15) };
+        var ctrlCheck = new CheckBox { Content = "Ctrl", Margin = new Thickness(0, 0, 15, 0), IsChecked = _settings.HotkeyCtrl };
+        var shiftCheck = new CheckBox { Content = "Shift", Margin = new Thickness(0, 0, 15, 0), IsChecked = _settings.HotkeyShift };
+        var altCheck = new CheckBox { Content = "Alt", Margin = new Thickness(0, 0, 15, 0), IsChecked = _settings.HotkeyAlt };
+        var winCheck = new CheckBox { Content = "Win", IsChecked = _settings.HotkeyWin };
+        modifierPanel.Children.Add(ctrlCheck);
+        modifierPanel.Children.Add(shiftCheck);
+        modifierPanel.Children.Add(altCheck);
+        modifierPanel.Children.Add(winCheck);
+        hotkeyPanel.Children.Add(modifierPanel);
+        
+        var keyLabel = new TextBlock { Text = "Key", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
+        hotkeyPanel.Children.Add(keyLabel);
+        var keyComboBoxBorder = CreateBorder();
+        var keyComboBox = new ComboBox { Width = 100, Padding = new Thickness(8, 6, 8, 6) };
+        keyComboBoxBorder.Child = keyComboBox;
+        
+        // Common keys (Win not included - use as modifier instead)
+        string[] commonKeys = { "None", "R", "F5", "F6", "F7", "F8", "Space", "Enter", "Escape" };
+        foreach (var key in commonKeys)
+        {
+            keyComboBox.Items.Add(key);
+        }
+        
+        // Try to match saved setting
+        for (int i = 0; i < keyComboBox.Items.Count; i++)
+        {
+            if (keyComboBox.Items[i]?.ToString()?.ToUpper() == _settings.HotkeyKey.ToUpper())
+            {
+                keyComboBox.SelectedIndex = i;
+                break;
+            }
+        }
+        if (keyComboBox.SelectedIndex < 0) keyComboBox.SelectedIndex = 0;
+        
+        hotkeyPanel.Children.Add(keyComboBoxBorder);
+        
+        var hotkeyHint = new TextBlock { Text = "Select 'None' for modifier-only (e.g., Ctrl+Win), or pick a modifier + key.", FontSize = 11, Foreground = Brushes.Gray, Margin = new Thickness(0, 15, 0, 0) };
+        hotkeyPanel.Children.Add(hotkeyHint);
+        
+        hotkeyTab.Content = hotkeyPanel;
+        tabControl.Items.Add(hotkeyTab);
+
+        // ============ TAB 3: Audio ============
         var audioTab = new TabItem { Header = "🔊 Audio" };
         var audioPanel = new StackPanel { Margin = new Thickness(15) };
         
@@ -395,7 +509,17 @@ public partial class WhisperOnlyWindow : Window
                 else
                     _settings.SelectedMicrophoneDevice = "";
                 
+                // Save hotkey settings
+                _settings.HotkeyCtrl = ctrlCheck.IsChecked == true;
+                _settings.HotkeyShift = shiftCheck.IsChecked == true;
+                _settings.HotkeyAlt = altCheck.IsChecked == true;
+                _settings.HotkeyWin = winCheck.IsChecked == true;
+                _settings.HotkeyKey = keyComboBox.SelectedItem?.ToString() ?? "R";
+                
                 _settings.Save();
+                
+                // Re-register hotkey immediately
+                RegisterGlobalHotkey();
             }
             finally
             {

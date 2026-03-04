@@ -46,6 +46,13 @@ public class AppSettings
         "whisperMeOff",
         "models");
 
+    // Global hotkey settings
+    public bool HotkeyCtrl { get; set; } = true;
+    public bool HotkeyShift { get; set; } = true;
+    public bool HotkeyAlt { get; set; } = false;
+    public bool HotkeyWin { get; set; } = false;
+    public string HotkeyKey { get; set; } = "R";
+
     private static string SettingsFilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "whisperMeOff",
