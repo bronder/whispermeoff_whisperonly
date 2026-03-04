@@ -19,6 +19,21 @@
             }
         },
         {
+            "label": "clean",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "clean",
+                "${workspaceFolder}/whisperMeOff.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "clear": true
+            }
+        },
+        {
             "label": "build-release",
             "command": "dotnet",
             "type": "process",
@@ -27,6 +42,27 @@
                 "${workspaceFolder}/whisperMeOff.csproj",
                 "-c",
                 "Release"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "clear": true
+            }
+        },
+        {
+            "label": "publish-release-self-contained",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/whisperMeOff.csproj",
+                "-c",
+                "Release",
+                "-r",
+                "win-x64",
+                "--self-contained",
+                "true"
             ],
             "problemMatcher": "$msCompile",
             "group": "build",
