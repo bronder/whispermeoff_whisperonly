@@ -10,6 +10,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PostBuildEvent>dotnet publish $(MSBuildProjectFile) -c Release -r win-x64 --self-contained true</PostBuildEvent>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="MaterialDesignThemes" Version="5.3.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
