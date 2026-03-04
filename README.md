@@ -83,6 +83,14 @@ dotnet publish -c Release -r win-x64 --self-contained true
 
 This will create a self-contained executable in `bin/Release/net10.0-windows/win-x64/publish/`.
 
+## Coming Soon
+
+- [ ] **Push-to-talk** - Hold the hotkey to record, release to transcribe
+- [ ] **Custom hotkeys** - Different hotkeys for different modes
+- [ ] **Punctuation control** - Choose how punctuation is added
+- [ ] **Dark/Light theme** - UI theme options
+- [ ] **theming** - UI theme options
+
 ## Technologies
 
 - C# / .NET 10
