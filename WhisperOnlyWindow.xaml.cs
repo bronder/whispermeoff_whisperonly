@@ -5,6 +5,23 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Runtime.InteropServices;
+using Button = System.Windows.Controls.Button;
+using Cursors = System.Windows.Input.Cursors;
+using Color = System.Windows.Media.Color;
+using Brushes = System.Windows.Media.Brushes;
+using TabControl = System.Windows.Controls.TabControl;
+using TabItem = System.Windows.Controls.TabItem;
+using ComboBox = System.Windows.Controls.ComboBox;
+using TextBox = System.Windows.Controls.TextBox;
+using CheckBox = System.Windows.Controls.CheckBox;
+using StackPanel = System.Windows.Controls.StackPanel;
+using Grid = System.Windows.Controls.Grid;
+using Border = System.Windows.Controls.Border;
+using Orientation = System.Windows.Controls.Orientation;
+using VerticalAlignment = System.Windows.VerticalAlignment;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
+using MessageBox = System.Windows.MessageBox;
+using FontWeights = System.Windows.FontWeights;
 
 namespace whisperMeOff;
 
@@ -174,6 +191,11 @@ public partial class WhisperOnlyWindow : Window
             if (StatusText.Text == "Listening..." || StatusText.Text == "Processing..." || StatusText.Text == "Transcribing...")
                 StatusText.Text = "Ready";
         }
+    }
+
+    public void OpenSettings()
+    {
+        Settings_Click(this, new RoutedEventArgs());
     }
 
     private void Settings_Click(object sender, RoutedEventArgs e)
@@ -360,19 +382,25 @@ public partial class WhisperOnlyWindow : Window
 
         saveButton.Click += (s, args) =>
         {
-            var fileNames = new[] { "ggml-tiny.bin", "ggml-base.bin", "ggml-small.bin", "ggml-medium.bin" };
-            _settings.WhisperModelFileName = fileNames[localModelCombo.SelectedIndex];
-            _settings.WhisperModelFolder = modelFolderBox.Text;
-            _settings.TranslationEnabled = translationCheck.IsChecked == true;
-            _settings.TranslationTargetLanguage = translationLang.SelectedItem?.ToString() ?? "en";
-            
-            if (micComboBox.SelectedIndex > 0)
-                _settings.SelectedMicrophoneDevice = micComboBox.SelectedItem?.ToString() ?? "";
-            else
-                _settings.SelectedMicrophoneDevice = "";
-            
-            _settings.Save();
-            settingsWindow.Close();
+            try
+            {
+                var fileNames = new[] { "ggml-tiny.bin", "ggml-base.bin", "ggml-small.bin", "ggml-medium.bin" };
+                _settings.WhisperModelFileName = fileNames[localModelCombo.SelectedIndex];
+                _settings.WhisperModelFolder = modelFolderBox.Text;
+                _settings.TranslationEnabled = translationCheck.IsChecked == true;
+                _settings.TranslationTargetLanguage = translationLang.SelectedItem?.ToString() ?? "en";
+                
+                if (micComboBox.SelectedIndex > 0)
+                    _settings.SelectedMicrophoneDevice = micComboBox.SelectedItem?.ToString() ?? "";
+                else
+                    _settings.SelectedMicrophoneDevice = "";
+                
+                _settings.Save();
+            }
+            finally
+            {
+                settingsWindow.Close();
+            }
         };
 
         cancelButton.Click += (s, args) => settingsWindow.Close();
@@ -416,6 +444,7 @@ public partial class WhisperOnlyWindow : Window
         
         settingsWindow.Content = rootGrid;
         settingsWindow.ShowDialog();
+        Hide();
     }
 
     private Style CreatePrimaryButtonStyle()

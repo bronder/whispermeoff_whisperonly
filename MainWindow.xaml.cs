@@ -15,6 +15,23 @@ using DrawingPen = System.Drawing.Pen;
 using Drawing2DSmoothingMode = System.Drawing.Drawing2D.SmoothingMode;
 using MediaBrushes = System.Windows.Media.Brushes;
 using MediaColor = System.Windows.Media.Color;
+using Color = System.Windows.Media.Color;
+using TabControl = System.Windows.Controls.TabControl;
+using ComboBox = System.Windows.Controls.ComboBox;
+using TextBox = System.Windows.Controls.TextBox;
+using CheckBox = System.Windows.Controls.CheckBox;
+using StackPanel = System.Windows.Controls.StackPanel;
+using Grid = System.Windows.Controls.Grid;
+using Border = System.Windows.Controls.Border;
+using Orientation = System.Windows.Controls.Orientation;
+using Button = System.Windows.Controls.Button;
+using TextBlock = System.Windows.Controls.TextBlock;
+using Separator = System.Windows.Controls.Separator;
+using MessageBox = System.Windows.MessageBox;
+using FontWeights = System.Windows.FontWeights;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
+using Cursors = System.Windows.Input.Cursors;
+using Application = System.Windows.Application;
 
 namespace whisperMeOff;
 
