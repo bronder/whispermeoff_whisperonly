@@ -47,6 +47,8 @@ bld/
 [Ll]ogs/
 
 # Visual Studio
+# Allow models folder in .vscode
+!.vscode/models/
 .vs/
 *.suo
 *.user
