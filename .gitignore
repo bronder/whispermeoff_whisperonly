@@ -5,6 +5,9 @@
 [Ll]og/
 [Ll]ogs/
 
+# Release artifacts
+*.zip
+
 # Temporary build files
 *_wpftmp.csproj
 
