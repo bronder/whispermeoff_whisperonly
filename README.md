@@ -13,6 +13,7 @@ A lightweight Windows desktop app for voice-to-text transcription using Whisper.
 - ⌨️ **Global Hotkey** - Works from anywhere, even when the app is minimized to the system tray
 - 📊 **VU Meter** - Visual audio level indicator during recording
 - 🌐 **Translation** - Optional translation to English using Whisper's built-in translation
+- 🚀 **Start with Windows** - Optionally launch automatically when you log in
 
 ## Requirements
 
@@ -50,7 +51,7 @@ Download the latest release from the [Releases](https://github.com/bronder/whisp
 1. Launch the application - it minimizes to the system tray
 2. Right-click the tray icon and select **Settings** to configure:
    - **Whisper Tab**: Select and download a model size
-   - **Hotkey Tab**: Set your preferred global hotkey (default: Ctrl+Shift+R)
+   - **Hotkey Tab**: Set your preferred global hotkey (default: Ctrl+Shift+R), and enable "Start with Windows" to launch automatically on login
    - **Audio Tab**: Select your microphone
 3. Press your hotkey to start recording
 4. Press it again to stop - your speech will be transcribed and typed into the previously focused app

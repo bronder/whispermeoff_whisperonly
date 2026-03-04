@@ -33,6 +33,9 @@ public class AppSettings
     public bool HotkeyWin { get; set; } = false;
     public string HotkeyKey { get; set; } = "R";
 
+    // Start with Windows
+    public bool StartWithWindows { get; set; } = false;
+
     private static string SettingsFilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "whisperMeOff",

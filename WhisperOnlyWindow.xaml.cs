@@ -405,6 +405,13 @@ public partial class WhisperOnlyWindow : Window
         var hotkeyHint = new TextBlock { Text = "Select 'None' for modifier-only (e.g., Ctrl+Win), or pick a modifier + key.", FontSize = 11, Foreground = Brushes.Gray, Margin = new Thickness(0, 15, 0, 0) };
         hotkeyPanel.Children.Add(hotkeyHint);
         
+        // Start with Windows checkbox
+        var startupSeparator = new Separator { Margin = new Thickness(0, 20, 0, 15) };
+        hotkeyPanel.Children.Add(startupSeparator);
+        
+        var startupCheck = new CheckBox { Content = "Start with Windows", FontSize = 13, IsChecked = App.GetStartWithWindows() };
+        hotkeyPanel.Children.Add(startupCheck);
+        
         hotkeyTab.Content = hotkeyPanel;
         tabControl.Items.Add(hotkeyTab);
 
@@ -515,6 +522,10 @@ public partial class WhisperOnlyWindow : Window
                 _settings.HotkeyAlt = altCheck.IsChecked == true;
                 _settings.HotkeyWin = winCheck.IsChecked == true;
                 _settings.HotkeyKey = keyComboBox.SelectedItem?.ToString() ?? "R";
+                
+                // Save startup setting
+                _settings.StartWithWindows = startupCheck.IsChecked == true;
+                App.SetStartWithWindows(_settings.StartWithWindows);
                 
                 _settings.Save();
                 

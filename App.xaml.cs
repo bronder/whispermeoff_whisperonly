@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Forms;
 using Application = System.Windows.Application;
@@ -12,6 +13,8 @@ public partial class App : System.Windows.Application
 {
     private NotifyIcon? _notifyIcon;
     private WhisperOnlyWindow? _mainWindow;
+    private const string StartupRegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+    private const string AppName = "whisperMeOff";
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr LoadImage(IntPtr hInst, string name, uint type, int cx, int cy, uint fuLoad);
@@ -48,6 +51,46 @@ public partial class App : System.Windows.Application
         _mainWindow.WindowState = WindowState.Minimized;
         _mainWindow.Show();
         _mainWindow.Hide();
+    }
+
+    public static void SetStartWithWindows(bool enable)
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, true);
+            if (key != null)
+            {
+                if (enable)
+                {
+                    var exePath = Environment.ProcessPath;
+                    if (!string.IsNullOrEmpty(exePath))
+                    {
+                        key.SetValue(AppName, $"\"{exePath}\"");
+                    }
+                }
+                else
+                {
+                    key.DeleteValue(AppName, false);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error setting startup: {ex.Message}");
+        }
+    }
+
+    public static bool GetStartWithWindows()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, false);
+            return key?.GetValue(AppName) != null;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private Icon LoadIconFromResource()
