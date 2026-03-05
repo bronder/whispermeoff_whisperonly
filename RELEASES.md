@@ -8,6 +8,7 @@
 - 🎨 **Waveform Display** - Animated waveform visualizer with colorful bars during recording
 - 📊 **Enhanced VU Meter** - Larger, more responsive audio level visualization
 - 🎵 **Gradient Coloring** - Dynamic color changes based on audio intensity (green → orange → red)
+- 🎤 **Push-to-talk** - Hold the hotkey to record, release to transcribe
 
 ### Existing Features
 - 🎙️ **Voice Transcription** - Press a global hotkey to record, press again to stop

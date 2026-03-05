@@ -51,6 +51,9 @@ public partial class WhisperOnlyWindow : Window
     
     [DllImport("user32.dll")]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+    
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int vKey);
 
     public WhisperOnlyWindow()
     {
@@ -63,8 +66,19 @@ public partial class WhisperOnlyWindow : Window
 
     private void WhisperOnlyWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        // Register global hotkey from settings
-        RegisterGlobalHotkey();
+        // Reload settings in case they were changed
+        _settings = AppSettings.Load();
+        
+        // Register global hotkey from settings (only if push-to-talk is disabled)
+        if (!_settings.PushToTalk)
+        {
+            RegisterGlobalHotkey();
+        }
+        else
+        {
+            // Start push-to-talk timer to monitor hotkey
+            StartPushToTalkTimer();
+        }
     }
 
     private void RegisterGlobalHotkey()
@@ -79,6 +93,12 @@ public partial class WhisperOnlyWindow : Window
         
         // Unregister existing hotkey first
         UnregisterHotKey(helper.Handle, HOTKEY_ID);
+        
+        // Skip registration if push-to-talk is enabled (keyboard hook handles it)
+        if (_settings.PushToTalk)
+        {
+            return;
+        }
         
         // Build modifiers from settings
         uint modifiers = 0;
@@ -125,8 +145,77 @@ public partial class WhisperOnlyWindow : Window
         // Unregister hotkey
         var helper = new System.Windows.Interop.WindowInteropHelper(this);
         UnregisterHotKey(helper.Handle, HOTKEY_ID);
+        
+        // Stop push-to-talk timer
+        _pushToTalkTimer?.Stop();
+    }
+
+    // Push-to-talk using timer to check key state
+    private System.Windows.Threading.DispatcherTimer? _pushToTalkTimer;
+    
+    private void StartPushToTalkTimer()
+    {
+        System.Diagnostics.Debug.WriteLine("[PTT] Starting push-to-talk timer");
+        
+        _pushToTalkTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(50)
+        };
+        _pushToTalkTimer.Tick += PushToTalkTimer_Tick;
+        _pushToTalkTimer.Start();
     }
     
+    private void StopPushToTalkTimer()
+    {
+        _pushToTalkTimer?.Stop();
+        _pushToTalkTimer = null;
+    }
+    
+    private void PushToTalkTimer_Tick(object? sender, EventArgs e)
+    {
+        if (!_settings.PushToTalk) return;
+        
+        uint hotkeyVk = GetVirtualKeyCode(_settings.HotkeyKey);
+        
+        // Check if modifiers are pressed
+        bool ctrlPressed = (GetAsyncKeyState(0x11) & 0x8000) != 0;
+        bool shiftPressed = (GetAsyncKeyState(0x10) & 0x8000) != 0;
+        bool altPressed = (GetAsyncKeyState(0x12) & 0x8000) != 0;
+        bool winPressed = (GetAsyncKeyState(0x5B) & 0x8000) != 0;
+        bool keyPressed = (GetAsyncKeyState((int)hotkeyVk) & 0x8000) != 0;
+        
+        System.Diagnostics.Debug.WriteLine($"[PTT] Key={_settings.HotkeyKey} Vk={hotkeyVk} | Ctrl={ctrlPressed}({_settings.HotkeyCtrl}) Shift={shiftPressed}({_settings.HotkeyShift}) Alt={altPressed}({_settings.HotkeyAlt}) Win={winPressed}({_settings.HotkeyWin}) KeyPressed={keyPressed}");
+        
+        bool modifiersMatch = true;
+        if (_settings.HotkeyCtrl) modifiersMatch &= ctrlPressed;
+        if (_settings.HotkeyShift) modifiersMatch &= shiftPressed;
+        if (_settings.HotkeyAlt) modifiersMatch &= altPressed;
+        if (_settings.HotkeyWin) modifiersMatch &= winPressed;
+        
+        // If key is "None" (Vk=0), just check modifiers; otherwise check both key and modifiers
+        bool isNoneKey = hotkeyVk == 0 || _settings.HotkeyKey.ToUpper() == "NONE";
+        bool hotkeyPressed = isNoneKey ? modifiersMatch : (keyPressed && modifiersMatch);
+        
+        if (_isRecording)
+        {
+            // If recording and hotkey is released, stop
+            if (!hotkeyPressed)
+            {
+                System.Diagnostics.Debug.WriteLine("[PTT] Key released, stopping recording");
+                StopRecordingAndTranscribe();
+            }
+        }
+        else
+        {
+            // If not recording and hotkey is pressed, start
+            if (hotkeyPressed)
+            {
+                System.Diagnostics.Debug.WriteLine("[PTT] Key pressed, starting recording");
+                StartRecording();
+            }
+        }
+    }
+
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
@@ -138,7 +227,8 @@ public partial class WhisperOnlyWindow : Window
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         // WM_HOTKEY = 0x0312
-        if (msg == 0x0312 && wParam.ToInt32() == HOTKEY_ID)
+        // Skip if push-to-talk is enabled (keyboard hook handles it)
+        if (msg == 0x0312 && wParam.ToInt32() == HOTKEY_ID && !_settings.PushToTalk)
         {
             handled = true;
             MicButton_Click(this, new RoutedEventArgs());
@@ -169,17 +259,19 @@ public partial class WhisperOnlyWindow : Window
     {
         if (_isRecording)
         {
-            _isRecording = false;
-            MicButton.Content = "MIC";
-            StatusText.Text = "Processing...";
-            VuMeter.Value = 0;
-            _speechService!.AudioLevelChanged -= SpeechService_AudioLevelChanged;
-            _speechService?.StopRecognition();
-            _vuMeterWindow?.Close();
-            _vuMeterWindow = null;
+            StopRecordingAndTranscribe();
             return;
         }
 
+        StartRecording();
+    }
+    
+    private void StartRecording()
+    {
+        if (_isRecording) return;
+        
+        System.Diagnostics.Debug.WriteLine("[PTT] Starting recording");
+        
         // Show floating VU meter
         _vuMeterWindow = new VuMeterWindow();
         _vuMeterWindow.PositionAtBottomMiddle();
@@ -212,49 +304,69 @@ public partial class WhisperOnlyWindow : Window
                 modelFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "whisperMeOff", "models");
             _speechService.LocalWhisperModelPath = Path.Combine(modelFolder, modelFile);
 
-            StatusText.Text = "Transcribing...";
-            var result = await _speechService.RecognizeSpeechWithWhisperAsync(deviceIndex);
-
-            if (!string.IsNullOrEmpty(result) && !result.StartsWith("Speech recognition error") && !result.StartsWith("Whisper"))
-            {
-                try 
-                { 
-                    System.Windows.Clipboard.SetText(result.Trim()); 
-                    StatusText.Text = "Copied to clipboard!";
-                    
-                    // Small delay then paste to the previously focused app
-                    await Task.Delay(100);
-                    
-                    // Send Ctrl+V using keybd_event
-                    keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero); // Ctrl down
-                    keybd_event(VK_V, 0, 0, UIntPtr.Zero);       // V down
-                    keybd_event(VK_V, 0, KEYEVENTF_KEYUP, UIntPtr.Zero); // V up
-                    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero); // Ctrl up
-                    
-                    StatusText.Text = "Pasted!";
-                }
-                catch (Exception ex) { StatusText.Text = $"Clipboard error: {ex.Message}"; }
-            }
-            else if (result.StartsWith("Speech recognition error") || result.StartsWith("Whisper"))
-                StatusText.Text = result;
-            else
-                StatusText.Text = "No speech detected";
+            // Start recording (async - will keep recording until stopped)
+            _ = _speechService.StartRecordingAsync(deviceIndex);
         }
-        catch (Exception ex) { StatusText.Text = $"Error: {ex.Message}"; }
-        finally
+        catch (Exception ex)
         {
+            StatusText.Text = $"Error: {ex.Message}";
             _isRecording = false;
             MicButton.Content = "MIC";
-            VuMeter.Value = 0;
             _vuMeterWindow?.Close();
             _vuMeterWindow = null;
-            if (_speechService != null)
-            {
-                _speechService.AudioLevelChanged -= SpeechService_AudioLevelChanged;
-            }
-            if (StatusText.Text == "Listening..." || StatusText.Text == "Processing..." || StatusText.Text == "Transcribing...")
-                StatusText.Text = "Ready";
         }
+    }
+    
+    public async void StopRecordingAndTranscribe()
+    {
+        if (!_isRecording) return;
+        
+        System.Diagnostics.Debug.WriteLine("[PTT] Stopping recording");
+        
+        // Stop push-to-talk timer
+        StopPushToTalkTimer();
+        
+        _isRecording = false;
+        MicButton.Content = "MIC";
+        StatusText.Text = "Processing...";
+        VuMeter.Value = 0;
+        
+        _speechService!.AudioLevelChanged -= SpeechService_AudioLevelChanged;
+        
+        // Stop recording and get result
+        var result = await _speechService!.StopRecordingAndTranscribeAsync();
+        _speechService?.Dispose();
+        _speechService = null;
+        
+        _vuMeterWindow?.Close();
+        _vuMeterWindow = null;
+
+        if (!string.IsNullOrEmpty(result) && !result.StartsWith("Speech recognition error") && !result.StartsWith("Whisper"))
+        {
+            try 
+            { 
+                System.Windows.Clipboard.SetText(result.Trim()); 
+                StatusText.Text = "Copied to clipboard!";
+                
+                // Small delay then paste to the previously focused app
+                await Task.Delay(100);
+                
+                // Send Ctrl+V using keybd_event
+                keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero); // Ctrl down
+                keybd_event(VK_V, 0, 0, UIntPtr.Zero);       // V down
+                keybd_event(VK_V, 0, KEYEVENTF_KEYUP, UIntPtr.Zero); // V up
+                keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero); // Ctrl up
+                
+                StatusText.Text = "Pasted!";
+            }
+            catch (Exception ex) { StatusText.Text = $"Clipboard error: {ex.Message}"; }
+        }
+        else if (result.StartsWith("Speech recognition error") || result.StartsWith("Whisper"))
+            StatusText.Text = result;
+        else
+            StatusText.Text = "No speech detected";
+        
+        StatusText.Text = "Ready";
     }
 
     public void OpenSettings()
@@ -403,6 +515,10 @@ public partial class WhisperOnlyWindow : Window
         var hotkeyHint = new TextBlock { Text = "Select 'None' for modifier-only (e.g., Ctrl+Win), or pick a modifier + key.", FontSize = 11, Foreground = Brushes.Gray, Margin = new Thickness(0, 15, 0, 0) };
         hotkeyPanel.Children.Add(hotkeyHint);
         
+        // Push-to-talk checkbox
+        var pushToTalkCheck = new CheckBox { Content = "Push-to-talk (hold key to record, release to transcribe)", FontSize = 13, IsChecked = _settings.PushToTalk, Margin = new Thickness(0, 15, 0, 0) };
+        hotkeyPanel.Children.Add(pushToTalkCheck);
+        
         // Start with Windows checkbox
         var startupSeparator = new Separator { Margin = new Thickness(0, 20, 0, 15) };
         hotkeyPanel.Children.Add(startupSeparator);
@@ -520,6 +636,7 @@ public partial class WhisperOnlyWindow : Window
                 _settings.HotkeyAlt = altCheck.IsChecked == true;
                 _settings.HotkeyWin = winCheck.IsChecked == true;
                 _settings.HotkeyKey = keyComboBox.SelectedItem?.ToString() ?? "R";
+                _settings.PushToTalk = pushToTalkCheck.IsChecked == true;
                 
                 // Save startup setting
                 _settings.StartWithWindows = startupCheck.IsChecked == true;

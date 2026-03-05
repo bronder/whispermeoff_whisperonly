@@ -58,6 +58,137 @@ public class SpeechRecognitionService : IDisposable
     public bool IsWhisperConfigured => !string.IsNullOrEmpty(_whisperModel) || !string.IsNullOrEmpty(LocalWhisperModelPath);
 
     /// <summary>
+    /// Starts recording audio to a temporary file for push-to-talk mode.
+    /// </summary>
+    public async Task StartRecordingAsync(int deviceIndex = -1)
+    {
+        _stopRecordingRequested = false;
+        
+        // Create temp file path
+        _tempWavPath = Path.Combine(Path.GetTempPath(), $"whisperMeOff_{DateTime.Now:yyyyMMddHHmmss}.wav");
+        
+        var tcs = new TaskCompletionSource<bool>();
+        
+        _waveIn = new WaveInEvent
+        {
+            DeviceNumber = deviceIndex,
+            WaveFormat = new WaveFormat(16000, 1)
+        };
+        
+        _waveWriter = new WaveFileWriter(_tempWavPath, _waveIn.WaveFormat);
+        
+        _waveIn.DataAvailable += (s, e) =>
+        {
+            if (_waveWriter != null && e.BytesRecorded > 0)
+            {
+                _waveWriter.Write(e.Buffer, 0, e.BytesRecorded);
+                
+                // Calculate audio level
+                unsafe
+                {
+                    fixed (byte* bufferPtr = e.Buffer)
+                    {
+                        short* samples = (short*)bufferPtr;
+                        int sampleCount = e.BytesRecorded / 2;
+                        double sum = 0;
+                        for (int i = 0; i < sampleCount; i++)
+                        {
+                            double sample = samples[i] / 32768.0;
+                            sum += sample * sample;
+                        }
+                        double rms = Math.Sqrt(sum / sampleCount);
+                        int level = (int)(20 * Math.Log10(rms + 0.0001) + 60);
+                        level = Math.Max(0, Math.Min(100, level));
+                        AudioLevelChanged?.Invoke(this, level);
+                    }
+                }
+            }
+        };
+        
+        _waveIn.RecordingStopped += (s, e) =>
+        {
+            tcs.TrySetResult(true);
+        };
+        
+        _waveIn.StartRecording();
+        _isListening = true;
+        ListeningStarted?.Invoke(this, EventArgs.Empty);
+    }
+    
+    /// <summary>
+    /// Stops recording and returns the transcription result.
+    /// </summary>
+    public async Task<string> StopRecordingAndTranscribeAsync()
+    {
+        if (!_isListening) return string.Empty;
+        
+        _stopRecordingRequested = true;
+        
+        // Stop recording
+        if (_waveIn != null)
+        {
+            try { _waveIn.StopRecording(); } catch { }
+        }
+        
+        // Wait for recording to stop
+        await Task.Delay(100);
+        
+        // Cleanup wave resources
+        _waveIn?.Dispose();
+        _waveIn = null;
+        
+        _waveWriter?.Dispose();
+        _waveWriter = null;
+        
+        _isListening = false;
+        ListeningStopped?.Invoke(this, EventArgs.Empty);
+        
+        // Transcribe the recorded audio
+        if (!string.IsNullOrEmpty(_tempWavPath) && File.Exists(_tempWavPath))
+        {
+            try
+            {
+                var result = await TranscribeAudioAsync(_tempWavPath);
+                
+                // Cleanup temp file
+                try { File.Delete(_tempWavPath); } catch { }
+                _tempWavPath = null;
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[Speech] Transcribe error: " + ex.Message);
+                return $"Transcription error: {ex.Message}";
+            }
+        }
+        
+        return string.Empty;
+    }
+    
+    private async Task<string> TranscribeAudioAsync(string audioPath)
+    {
+        // Check if we have a local model
+        if (string.IsNullOrEmpty(LocalWhisperModelPath) || !File.Exists(LocalWhisperModelPath))
+        {
+            return "Whisper model not found. Please download a model in Settings.";
+        }
+        
+        try
+        {
+            using var fileStream = File.OpenRead(audioPath);
+            using var whisperService = new WhisperNetService(LocalWhisperModelPath);
+
+            var transcription = await whisperService.ProcessAudioAsync(fileStream, TranslateWithWhisper, WhisperTranslationTarget, CancellationToken.None);
+            return transcription.Trim();
+        }
+        catch (Exception ex)
+        {
+            return $"Whisper error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Gets the list of available audio input devices.
     /// </summary>
     public static List<(int index, string name)> GetAvailableDevices()

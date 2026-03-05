@@ -12,8 +12,7 @@ A lightweight Windows desktop app for voice-to-text transcription using Whisper.
 - 📊 **VU Meter** - Visual audio level indicator during recording
 - 🎨 **Waveform Display** - Animated waveform visualizer during recording
 - 🌐 **Translation** - Optional translation to English using Whisper's built-in translation
-- 🚀 **Start with Windows** - Optionally launch automatically when you log in
-
+- 🚀 **Start with Windows** - Optionally launch automatically when you log in- 🎤 **Push-to-talk** - Hold the hotkey to record, release to transcribe
 ## Requirements
 
 - Windows 10 or later
@@ -87,12 +86,9 @@ This will create a self-contained executable in `bin/Release/net10.0-windows/win
 
 ## Coming Soon
 
-- [ ] **Push-to-talk** - Hold the hotkey to record, release to transcribe
-- [ ] **Real Time** - Hold the hotkey to record and perform real-time vs end of chat batch.
 - [ ] **Custom hotkeys** - Different hotkeys for different modes
 - [ ] **Punctuation control** - Choose how punctuation is added
 - [ ] **Dark/Light theme** - UI theme options
-- [ ] **theming** - UI theming
 
 ## Technologies
 

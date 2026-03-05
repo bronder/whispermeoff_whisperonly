@@ -32,6 +32,9 @@ public class AppSettings
     public bool HotkeyAlt { get; set; } = false;
     public bool HotkeyWin { get; set; } = false;
     public string HotkeyKey { get; set; } = "R";
+    
+    // Push-to-talk mode (hold hotkey to record, release to transcribe)
+    public bool PushToTalk { get; set; } = false;
 
     // Start with Windows
     public bool StartWithWindows { get; set; } = false;
