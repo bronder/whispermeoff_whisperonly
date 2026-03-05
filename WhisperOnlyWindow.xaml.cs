@@ -301,7 +301,7 @@ public partial class WhisperOnlyWindow : Window
         var localModelLabel = new TextBlock { Text = "Model Size", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
         whisperPanel.Children.Add(localModelLabel);
         var localModelPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 15) };
-        var localModelCombo = new ComboBox { Width = 200, Padding = new Thickness(8, 6, 8, 6) };
+        var localModelCombo = new ComboBox { Width = 260, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Style = CreateMaterialComboBoxStyle() };
         localModelCombo.Items.Add("ggml-tiny.bin (~75 MB)");
         localModelCombo.Items.Add("ggml-base.bin (~150 MB)");
         localModelCombo.Items.Add("ggml-small.bin (~500 MB)");
@@ -340,7 +340,7 @@ public partial class WhisperOnlyWindow : Window
         
         var translationPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
         var translationCheck = new CheckBox { Content = "Enable translation", VerticalAlignment = VerticalAlignment.Center };
-        var translationLang = new ComboBox { Width = 100, Margin = new Thickness(12, 0, 0, 0), Padding = new Thickness(8, 6, 8, 6) };
+        var translationLang = new ComboBox { Width = 100, Margin = new Thickness(12, 0, 0, 0), Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Style = CreateMaterialComboBoxStyle() };
         translationLang.Items.Add("en");
         translationLang.Items.Add("es");
         translationLang.Items.Add("fr");
@@ -378,9 +378,7 @@ public partial class WhisperOnlyWindow : Window
         
         var keyLabel = new TextBlock { Text = "Key", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
         hotkeyPanel.Children.Add(keyLabel);
-        var keyComboBoxBorder = CreateBorder();
-        var keyComboBox = new ComboBox { Width = 100, Padding = new Thickness(8, 6, 8, 6) };
-        keyComboBoxBorder.Child = keyComboBox;
+        var keyComboBox = new ComboBox { Width = 120, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Style = CreateMaterialComboBoxStyle(), HorizontalAlignment = HorizontalAlignment.Left };
         
         // Common keys (Win not included - use as modifier instead)
         string[] commonKeys = { "None", "R", "F5", "F6", "F7", "F8", "Space", "Enter", "Escape" };
@@ -400,7 +398,7 @@ public partial class WhisperOnlyWindow : Window
         }
         if (keyComboBox.SelectedIndex < 0) keyComboBox.SelectedIndex = 0;
         
-        hotkeyPanel.Children.Add(keyComboBoxBorder);
+        hotkeyPanel.Children.Add(keyComboBox);
         
         var hotkeyHint = new TextBlock { Text = "Select 'None' for modifier-only (e.g., Ctrl+Win), or pick a modifier + key.", FontSize = 11, Foreground = Brushes.Gray, Margin = new Thickness(0, 15, 0, 0) };
         hotkeyPanel.Children.Add(hotkeyHint);
@@ -423,7 +421,7 @@ public partial class WhisperOnlyWindow : Window
         var micLabel = new TextBlock { Text = "Microphone Device", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
         audioPanel.Children.Add(micLabel);
         var micComboBoxBorder = CreateBorder();
-        var micComboBox = new ComboBox { IsEditable = false, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var micComboBox = new ComboBox { IsEditable = false, Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Style = CreateMaterialComboBoxStyle() };
         micComboBoxBorder.Child = micComboBox;
         
         micComboBox.Items.Add("(Default System Microphone)");
@@ -626,6 +624,47 @@ public partial class WhisperOnlyWindow : Window
         border.AppendChild(contentPresenter);
         template.VisualTree = border;
         style.Setters.Add(new Setter(Button.TemplateProperty, template));
+        return style;
+    }
+
+    private Style CreateMaterialComboBoxStyle()
+    {
+        var style = new Style(typeof(ComboBox));
+        
+        // Main ComboBox style
+        style.Setters.Add(new Setter(ComboBox.BackgroundProperty, Brushes.White));
+        style.Setters.Add(new Setter(ComboBox.ForegroundProperty, new SolidColorBrush(Color.FromRgb(33, 33, 33))));
+        style.Setters.Add(new Setter(ComboBox.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(224, 224, 224))));
+        style.Setters.Add(new Setter(ComboBox.BorderThicknessProperty, new Thickness(1)));
+        style.Setters.Add(new Setter(ComboBox.PaddingProperty, new Thickness(12, 10, 12, 10)));
+        style.Setters.Add(new Setter(ComboBox.FontSizeProperty, 14.0));
+        style.Setters.Add(new Setter(ComboBox.VerticalContentAlignmentProperty, VerticalAlignment.Center));
+        
+        // Add triggers for hover/focus effects
+        var hoverTrigger = new Trigger { Property = ComboBox.IsMouseOverProperty, Value = true };
+        hoverTrigger.Setters.Add(new Setter(ComboBox.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(0, 120, 212))));
+        style.Triggers.Add(hoverTrigger);
+        
+        var focusedTrigger = new Trigger { Property = ComboBox.IsKeyboardFocusWithinProperty, Value = true };
+        focusedTrigger.Setters.Add(new Setter(ComboBox.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(0, 120, 212))));
+        focusedTrigger.Setters.Add(new Setter(ComboBox.BorderThicknessProperty, new Thickness(2)));
+        style.Triggers.Add(focusedTrigger);
+        
+        // Style the items in dropdown
+        var itemContainerStyle = new Style(typeof(ComboBoxItem));
+        itemContainerStyle.Setters.Add(new Setter(ComboBoxItem.PaddingProperty, new Thickness(12, 8, 12, 8)));
+        itemContainerStyle.Setters.Add(new Setter(ComboBoxItem.FontSizeProperty, 14.0));
+        
+        var itemHoverTrigger = new Trigger { Property = ComboBoxItem.IsMouseOverProperty, Value = true };
+        itemHoverTrigger.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty, new SolidColorBrush(Color.FromRgb(245, 245, 245))));
+        itemContainerStyle.Triggers.Add(itemHoverTrigger);
+        
+        var itemSelectedTrigger = new Trigger { Property = ComboBoxItem.IsSelectedProperty, Value = true };
+        itemSelectedTrigger.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty, new SolidColorBrush(Color.FromRgb(224, 242, 255))));
+        itemContainerStyle.Triggers.Add(itemSelectedTrigger);
+        
+        style.Setters.Add(new Setter(ComboBox.ItemContainerStyleProperty, itemContainerStyle));
+        
         return style;
     }
 }

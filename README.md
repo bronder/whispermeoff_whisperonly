@@ -2,8 +2,6 @@
 
 A lightweight Windows desktop app for voice-to-text transcription using Whisper. Press a hotkey, speak, and your words are automatically typed into any application.
 
-![whisperMeOff Screenshot](https://via.placeholder.com/800x450?text=whisperMeOff+Screenshot)
-
 ## Features
 
 - 🎙️ **Voice Transcription** - Press a hotkey, speak, and see your words appear in any app
@@ -12,6 +10,7 @@ A lightweight Windows desktop app for voice-to-text transcription using Whisper.
 - 🚀 **GPU Acceleration** - Vulkan support for faster transcription on compatible GPUs
 - ⌨️ **Global Hotkey** - Works from anywhere, even when the app is minimized to the system tray
 - 📊 **VU Meter** - Visual audio level indicator during recording
+- 🎨 **Waveform Display** - Animated waveform visualizer during recording
 - 🌐 **Translation** - Optional translation to English using Whisper's built-in translation
 - 🚀 **Start with Windows** - Optionally launch automatically when you log in
 

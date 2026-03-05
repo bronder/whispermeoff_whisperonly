@@ -1,3 +1,22 @@
+# whisperMeOff Releases
+
+## whisperMeOff Season 1.2
+
+**Voice-to-text transcription using local Whisper models**
+
+### New Features
+- 🎨 **Waveform Display** - Animated waveform visualizer with colorful bars during recording
+- 📊 **Enhanced VU Meter** - Larger, more responsive audio level visualization
+- 🎵 **Gradient Coloring** - Dynamic color changes based on audio intensity (green → orange → red)
+
+### Existing Features
+- 🎙️ **Voice Transcription** - Press a global hotkey to record, press again to stop
+- 📋 **Auto-Paste** - Transcribed text is automatically typed into the active application
+- ⌨️ **Global Hotkey** - Works from anywhere, even when minimized to system tray
+- 🌐 **Translation Support** - Translate speech to English using Whisper
+
+---
+
 ## whisperMeOff Season 1.1
 
 **Voice-to-text transcription using local Whisper models**
