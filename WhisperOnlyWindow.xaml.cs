@@ -367,6 +367,12 @@ public partial class WhisperOnlyWindow : Window
             StatusText.Text = "No speech detected";
         
         StatusText.Text = "Ready";
+        
+        // Restart push-to-talk timer for next recording
+        if (_settings.PushToTalk)
+        {
+            StartPushToTalkTimer();
+        }
     }
 
     public void OpenSettings()

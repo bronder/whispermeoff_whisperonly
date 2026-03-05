@@ -1,6 +1,6 @@
 # whisperMeOff Releases
 
-## whisperMeOff Season 1.2
+## whisperMeOff Season 2.0
 
 **Voice-to-text transcription using local Whisper models**
 
