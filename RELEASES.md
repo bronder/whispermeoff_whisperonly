@@ -1,16 +1,19 @@
 # whisperMeOff Releases
 
-## whisperMeOff Season 2.0
+## whisperMeOff Season 2.1
 
 **Voice-to-text transcription using local Whisper models**
 
 ### New Features
+- 🤖 **LLama Enhancement** - Optional local LLM (LLamaSharp) to normalize/format transcribed text, convert spoken paths to proper format (e.g., "c colon backslash" → "C:\")
+- 📊 **Transcription Progress** - Visual progress indicator during transcription and LLama enhancement
+- ⚡ **Vulkan GPU Acceleration** - GPU support for both Whisper and LLama transcription
+
+### Existing Features
 - 🎨 **Waveform Display** - Animated waveform visualizer with colorful bars during recording
 - 📊 **Enhanced VU Meter** - Larger, more responsive audio level visualization
 - 🎵 **Gradient Coloring** - Dynamic color changes based on audio intensity (green → orange → red)
 - 🎤 **Push-to-talk** - Hold the hotkey to record, release to transcribe
-
-### Existing Features
 - 🎙️ **Voice Transcription** - Press a global hotkey to record, press again to stop
 - 📋 **Auto-Paste** - Transcribed text is automatically typed into the active application
 - ⌨️ **Global Hotkey** - Works from anywhere, even when minimized to system tray

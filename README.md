@@ -13,6 +13,7 @@ A lightweight Windows desktop app for voice-to-text transcription using Whisper.
 - 🎨 **Waveform Display** - Animated waveform visualizer during recording
 - 🌐 **Translation** - Optional translation to English using Whisper's built-in translation
 - 🚀 **Start with Windows** - Optionally launch automatically when you log in- 🎤 **Push-to-talk** - Hold the hotkey to record, release to transcribe
+- 🤖 **LLama Enhancement** - Optional local LLM enhancement to normalize/format transcribed text
 ## Requirements
 
 - Windows 10 or later
@@ -51,6 +52,7 @@ Download the latest release from the [Releases](https://github.com/bronder/whisp
    - **Whisper Tab**: Select and download a model size
    - **Hotkey Tab**: Set your preferred global hotkey (default: Ctrl+Shift+R), and enable "Start with Windows" to launch automatically on login
    - **Audio Tab**: Select your microphone
+   - **LLama Tab**: Enable local LLM enhancement to normalize/format transcribed text
 3. Press your hotkey to start recording
 4. Press it again to stop - your speech will be transcribed and typed into the previously focused app
 
@@ -75,6 +77,7 @@ Settings are stored in `%APPDATA%\whisperMeOff\settings.json` and include:
 - Microphone device
 - Global hotkey configuration
 - Translation settings
+- LLama enhancement settings (model file, enable/disable)
 
 ## Building for Release
 
@@ -89,12 +92,14 @@ This will create a self-contained executable in `bin/Release/net10.0-windows/win
 - [ ] **Custom hotkeys** - Different hotkeys for different modes
 - [ ] **Punctuation control** - Choose how punctuation is added
 - [ ] **Dark/Light theme** - UI theme options
+- [x] **LLama Enhancement** - ✅ Added in v2.1
 
 ## Technologies
 
 - C# / .NET 10
 - WPF (Windows Presentation Foundation)
 - [Whisper.net](https://github.com/arianon/Whisper.net) - .NET bindings for Whisper
+- [LLamaSharp](https://github.com/SciSharp/LLamaSharp) - .NET bindings for LLama.cpp
 - NAudio - Audio capture
 
 ## License
