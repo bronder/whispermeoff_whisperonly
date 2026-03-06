@@ -16,6 +16,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LLamaSharp" Version="0.16.0" />
+    <PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.16.0" />
     <PackageReference Include="MaterialDesignThemes" Version="5.3.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Whisper.net" Version="1.9.1-preview1" />

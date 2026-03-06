@@ -52,6 +52,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="5"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="10"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -65,7 +67,12 @@
         </Grid>
         
         <TextBlock x:Name="StatusText" Grid.Row="6" Text="Ready" FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>
-        <Button x:Name="MicButton" Grid.Row="8" Style="{StaticResource ModernButton}" Content="MIC" Click="MicButton_Click" Width="80" Height="80" FontSize="20" ToolTip="Click or press F5 to start voice input"/>
+        
+        <!-- Progress indicator for transcription/enhancement -->
+        <ProgressBar x:Name="TranscribeProgress" Grid.Row="7" Height="4" Minimum="0" Maximum="100" Value="0" 
+                    Background="#E0E0E0" Foreground="#28A745" BorderThickness="0" Visibility="Collapsed"/>
+        
+        <Button x:Name="MicButton" Grid.Row="10" Style="{StaticResource ModernButton}" Content="MIC" Click="MicButton_Click" Width="80" Height="80" FontSize="20" ToolTip="Click or press F5 to start voice input"/>
     </Grid>
     </DockPanel>
 </Window>

@@ -28,9 +28,11 @@ namespace whisperMeOff;
 public partial class WhisperOnlyWindow : Window
 {
     private SpeechRecognitionService? _speechService;
+    private LLamaService? _llamaService;
     private bool _isRecording;
     private AppSettings _settings = new();
     private VuMeterWindow? _vuMeterWindow;
+    private Style? _modernButtonStyle;
     
     // Global hotkey constants
     private const int HOTKEY_ID = 9000;
@@ -62,12 +64,34 @@ public partial class WhisperOnlyWindow : Window
         PreviewKeyDown += WhisperOnlyWindow_PreviewKeyDown;
         Loaded += WhisperOnlyWindow_Loaded;
         Closing += WhisperOnlyWindow_Closing;
+        
+        // Create button styles for later use
+        _modernButtonStyle = CreateModernButtonStyle();
     }
 
     private void WhisperOnlyWindow_Loaded(object sender, RoutedEventArgs e)
     {
         // Reload settings in case they were changed
         _settings = AppSettings.Load();
+        
+        // Initialize LLama service if enabled
+        if (_settings.LLamaEnabled && !string.IsNullOrEmpty(_settings.LLamaModelFileName))
+        {
+            _llamaService = new LLamaService();
+            
+            // Handle full path or just filename
+            string modelFolder = _settings.LLamaModelFolder;
+            string modelFileName = _settings.LLamaModelFileName;
+            
+            if (File.Exists(modelFileName))
+            {
+                // It's a full path
+                modelFolder = Path.GetDirectoryName(modelFileName) ?? modelFolder;
+                modelFileName = Path.GetFileName(modelFileName);
+            }
+            
+            _ = _llamaService.LoadModelAsync(modelFolder, modelFileName);
+        }
         
         // Register global hotkey from settings (only if push-to-talk is disabled)
         if (!_settings.PushToTalk)
@@ -148,6 +172,9 @@ public partial class WhisperOnlyWindow : Window
         
         // Stop push-to-talk timer
         _pushToTalkTimer?.Stop();
+        
+        // Dispose LLama service
+        _llamaService?.Dispose();
     }
 
     // Push-to-talk using timer to check key state
@@ -328,8 +355,13 @@ public partial class WhisperOnlyWindow : Window
         
         _isRecording = false;
         MicButton.Content = "MIC";
-        StatusText.Text = "Processing...";
+        StatusText.Text = "Transcribing...";
         VuMeter.Value = 0;
+        TranscribeProgress.Visibility = Visibility.Visible;
+        TranscribeProgress.IsIndeterminate = true;
+        _vuMeterWindow?.SetRecordingIndicator(false);
+        _vuMeterWindow?.SetStatus("Transcribing...");
+        _vuMeterWindow?.ShowProgress(true);
         
         _speechService!.AudioLevelChanged -= SpeechService_AudioLevelChanged;
         
@@ -343,6 +375,38 @@ public partial class WhisperOnlyWindow : Window
 
         if (!string.IsNullOrEmpty(result) && !result.StartsWith("Speech recognition error") && !result.StartsWith("Whisper"))
         {
+            // Enhance with LLama if enabled
+            if (_settings.LLamaEnabled && _llamaService?.IsLoaded == true)
+            {
+                StatusText.Text = "Enhancing with LLama...";
+                _vuMeterWindow?.SetStatus("Enhancing...");
+                TranscribeProgress.IsIndeterminate = true;
+                try
+                {
+                    var enhancedResult = await _llamaService.EnhanceTranscriptionAsync(result, _settings);
+                    if (!string.IsNullOrWhiteSpace(enhancedResult) && !enhancedResult.StartsWith("Error"))
+                    {
+                        result = enhancedResult;
+                        StatusText.Text = "LLama enhanced!";
+                        _vuMeterWindow?.SetStatus("Enhanced!");
+                    }
+                    else
+                    {
+                        StatusText.Text = "LLama failed, using original";
+                        _vuMeterWindow?.SetStatus("Enhance failed");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"LLama error: {ex.Message}");
+                    StatusText.Text = "LLama error, using original";
+                    _vuMeterWindow?.SetStatus("LLama error");
+                }
+            }
+            
+            TranscribeProgress.Visibility = Visibility.Collapsed;
+            _vuMeterWindow?.ShowProgress(false);
+            
             try 
             { 
                 System.Windows.Clipboard.SetText(result.Trim()); 
@@ -366,6 +430,8 @@ public partial class WhisperOnlyWindow : Window
         else
             StatusText.Text = "No speech detected";
         
+        TranscribeProgress.Visibility = Visibility.Collapsed;
+        _vuMeterWindow?.ShowProgress(false);
         StatusText.Text = "Ready";
         
         // Restart push-to-talk timer for next recording
@@ -382,6 +448,9 @@ public partial class WhisperOnlyWindow : Window
 
     private void Settings_Click(object sender, RoutedEventArgs e)
     {
+        // Reload settings to ensure we have the latest
+        _settings = AppSettings.Load();
+        
         // Show a simple settings dialog with tabs for Whisper and Audio
         var settingsWindow = new Window
         {
@@ -389,20 +458,11 @@ public partial class WhisperOnlyWindow : Window
             Width = 500,
             SizeToContent = SizeToContent.Height,
             MaxHeight = SystemParameters.PrimaryScreenHeight * 0.85,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Owner = this,
+            WindowStartupLocation = WindowStartupLocation.Manual,
             ResizeMode = ResizeMode.NoResize,
             Background = new SolidColorBrush(Color.FromRgb(235, 235, 235)),
-            WindowStyle = WindowStyle.None,
-            AllowsTransparency = true,
-            ShowInTaskbar = false
+            ShowInTaskbar = true
         };
-
-        // Add rounded corners and shadow
-        settingsWindow.Resources.Add(typeof(Window), new Style(typeof(Window))
-        {
-            Setters = { new Setter(Window.EffectProperty, new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 20, ShadowDepth = 0, Opacity = 0.5 }) }
-        });
 
         var mainGrid = new Grid();
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -435,7 +495,13 @@ public partial class WhisperOnlyWindow : Window
             }
         }
         localModelPanel.Children.Add(localModelCombo);
-        var downloadModelButton = new Button { Content = "⬇️ Download", Margin = new Thickness(8, 0, 0, 0), Height = 30, VerticalAlignment = VerticalAlignment.Center };
+        var downloadModelButton = new Button 
+        { 
+            Content = "⬇️ Download", 
+            Style = _modernButtonStyle, 
+            Margin = new Thickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
         localModelPanel.Children.Add(downloadModelButton);
         whisperPanel.Children.Add(localModelPanel);
 
@@ -573,6 +639,36 @@ public partial class WhisperOnlyWindow : Window
         audioTab.Content = audioPanel;
         tabControl.Items.Add(audioTab);
 
+        // ============ TAB 4: LLama ============
+        var llamaTab = new TabItem { Header = "🦙 LLama" };
+        var llamaPanel = new StackPanel { Margin = new Thickness(15) };
+        
+        // Enable LLama checkbox
+        var llamaEnabledCheck = new CheckBox { Content = "Enable LLama enhancement", FontSize = 14, IsChecked = _settings.LLamaEnabled, Margin = new Thickness(0, 0, 0, 15) };
+        llamaPanel.Children.Add(llamaEnabledCheck);
+        
+        // Model filename
+        var llamaModelLabel = new TextBlock { Text = "Model File (e.g., llama-2-7b.gguf)", FontSize = 13, Margin = new Thickness(0, 0, 0, 6) };
+        llamaPanel.Children.Add(llamaModelLabel);
+        var llamaModelPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 15) };
+        var llamaModelBorder = CreateBorder();
+        var llamaModelBox = new TextBox { Padding = new Thickness(12, 10, 12, 10), FontSize = 14, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Width = 260 };
+        llamaModelBox.Text = _settings.LLamaModelFileName;
+        llamaModelBorder.Child = llamaModelBox;
+        llamaModelPanel.Children.Add(llamaModelBorder);
+        var llamaModelBrowseButton = new Button 
+        { 
+            Content = "📄 Browse", 
+            Style = _modernButtonStyle,
+            Margin = new Thickness(8, 0, 0, 0), 
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        llamaModelPanel.Children.Add(llamaModelBrowseButton);
+        llamaPanel.Children.Add(llamaModelPanel);
+        
+        llamaTab.Content = llamaPanel;
+        tabControl.Items.Add(llamaTab);
+
         Grid.SetRow(tabControl, 0);
         mainGrid.Children.Add(tabControl);
 
@@ -592,8 +688,8 @@ public partial class WhisperOnlyWindow : Window
         var primaryStyle = CreatePrimaryButtonStyle();
         var cancelStyle = CreateCancelButtonStyle();
         
-        var saveButton = new Button { Content = "Save", Style = primaryStyle, Margin = new Thickness(0, 0, 0, 0), Height = 44, MinWidth = 80 };
-        var cancelButton = new Button { Content = "Cancel", Style = cancelStyle, Margin = new Thickness(12, 0, 0, 0), Height = 44, MinWidth = 80 };
+        var saveButton = new Button { Content = "Save", Style = primaryStyle, Margin = new Thickness(0, 0, 0, 0), MinWidth = 80 };
+        var cancelButton = new Button { Content = "Cancel", Style = cancelStyle, Margin = new Thickness(12, 0, 0, 0), MinWidth = 80 };
 
         downloadModelButton.Click += async (s, args) =>
         {
@@ -608,16 +704,27 @@ public partial class WhisperOnlyWindow : Window
                 downloadModelButton.Content = "Downloading...";
                 await SpeechRecognitionService.DownloadModelToPathAsync(targetPath);
                 downloadModelButton.Content = "Downloaded ✅";
-                MessageBox.Show($"Model downloaded to: {targetPath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Download failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
+                MessageBox.Show($"Download failed: {ex.Message}");
                 downloadModelButton.IsEnabled = true;
                 downloadModelButton.Content = "⬇️ Download Model";
+            }
+        };
+
+        // LLama model file browse button
+        llamaModelBrowseButton.Click += (s, args) =>
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Select LLama Model",
+                Filter = "GGUF Models (*.gguf)|*.gguf|All Files (*.*)|*.*",
+                InitialDirectory = _settings.LLamaModelFolder
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                llamaModelBox.Text = dialog.FileName;
             }
         };
 
@@ -648,6 +755,12 @@ public partial class WhisperOnlyWindow : Window
                 _settings.StartWithWindows = startupCheck.IsChecked == true;
                 App.SetStartWithWindows(_settings.StartWithWindows);
                 
+                // Save LLama settings
+                _settings.LLamaEnabled = llamaEnabledCheck.IsChecked == true;
+                _settings.LLamaModelFileName = llamaModelBox.Text;
+                
+                System.Diagnostics.Debug.WriteLine($"[SETTINGS] LLamaEnabled={_settings.LLamaEnabled}, Model={_settings.LLamaModelFileName}");
+                
                 _settings.Save();
                 
                 // Re-register hotkey immediately
@@ -669,38 +782,18 @@ public partial class WhisperOnlyWindow : Window
         // Wrap content in a border for rounded corners
         var contentBorder = new Border
         {
-            CornerRadius = new CornerRadius(12),
             Background = Brushes.White,
             Margin = new Thickness(10)
         };
         contentBorder.Child = mainGrid;
         
-        // Add a simple title bar with close button
-        var titleBar = new Grid { Height = 44, Background = new SolidColorBrush(Color.FromRgb(245, 245, 245)) };
-        titleBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        titleBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        settingsWindow.Content = contentBorder;
         
-        var titleText = new TextBlock { Text = "Settings", FontSize = 14, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(15, 0, 0, 0) };
-        var closeButton = new Button { Content = "✕", Width = 44, Height = 44, Background = Brushes.Transparent, BorderThickness = new Thickness(0), FontSize = 16, Cursor = Cursors.Hand };
-        closeButton.Click += (s, args) => settingsWindow.Close();
+        // Center on screen
+        settingsWindow.Left = (SystemParameters.PrimaryScreenWidth - settingsWindow.Width) / 2;
+        settingsWindow.Top = (SystemParameters.PrimaryScreenHeight - settingsWindow.Height) / 2;
         
-        Grid.SetColumn(titleText, 0);
-        Grid.SetColumn(closeButton, 1);
-        titleBar.Children.Add(titleText);
-        titleBar.Children.Add(closeButton);
-        
-        var rootGrid = new Grid();
-        rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        rootGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-        
-        Grid.SetRow(titleBar, 0);
-        Grid.SetRow(contentBorder, 1);
-        rootGrid.Children.Add(titleBar);
-        rootGrid.Children.Add(contentBorder);
-        
-        settingsWindow.Content = rootGrid;
-        settingsWindow.ShowDialog();
-        Hide();
+        settingsWindow.Show();
     }
 
     private Style CreatePrimaryButtonStyle()
@@ -712,6 +805,28 @@ public partial class WhisperOnlyWindow : Window
         style.Setters.Add(new Setter(Button.PaddingProperty, new Thickness(20, 12, 20, 12)));
         style.Setters.Add(new Setter(Button.FontSizeProperty, 14.0));
         style.Setters.Add(new Setter(Button.FontWeightProperty, FontWeights.SemiBold));
+        style.Setters.Add(new Setter(Button.CursorProperty, Cursors.Hand));
+        var template = new ControlTemplate(typeof(Button));
+        var border = new FrameworkElementFactory(typeof(Border));
+        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+        border.SetValue(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(0, 120, 212)));
+        var contentPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+        contentPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        contentPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+        border.AppendChild(contentPresenter);
+        template.VisualTree = border;
+        style.Setters.Add(new Setter(Button.TemplateProperty, template));
+        return style;
+    }
+
+    private Style CreateModernButtonStyle()
+    {
+        var style = new Style(typeof(Button));
+        style.Setters.Add(new Setter(Button.BackgroundProperty, new SolidColorBrush(Color.FromRgb(0, 120, 212))));
+        style.Setters.Add(new Setter(Button.ForegroundProperty, Brushes.White));
+        style.Setters.Add(new Setter(Button.BorderThicknessProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(Button.PaddingProperty, new Thickness(12, 6, 12, 6)));
+        style.Setters.Add(new Setter(Button.FontSizeProperty, 12.0));
         style.Setters.Add(new Setter(Button.CursorProperty, Cursors.Hand));
         var template = new ControlTemplate(typeof(Button));
         var border = new FrameworkElementFactory(typeof(Border));

@@ -5,13 +5,6 @@ namespace whisperMeOff;
 
 public class AppSettings
 {
-    // Window position and size
-    public double WindowLeft { get; set; } = double.NaN;
-    public double WindowTop { get; set; } = double.NaN;
-    public double WindowWidth { get; set; } = 950;
-    public double WindowHeight { get; set; } = 650;
-    public bool WindowMaximized { get; set; } = false;
-
     // Audio input device for speech recognition
     public string SelectedMicrophoneDevice { get; set; } = "";
 
@@ -25,6 +18,16 @@ public class AppSettings
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "whisperMeOff",
         "models");
+
+    // LLamaSharp settings
+    public bool LLamaEnabled { get; set; } = false;
+    public string LLamaModelFolder { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "whisperMeOff",
+        "llama-models");
+    public string LLamaModelFileName { get; set; } = "";
+    public int LLamaMaxTokens { get; set; } = 512;
+    public double LLamaTemperature { get; set; } = 0.7;
 
     // Global hotkey settings
     public bool HotkeyCtrl { get; set; } = true;
@@ -71,12 +74,17 @@ public class AppSettings
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+            };
+            var json = JsonSerializer.Serialize(this, options);
             File.WriteAllText(SettingsFilePath, json);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail if we can't save
+            System.Diagnostics.Debug.WriteLine($"[SAVE ERROR] {ex.Message}");
         }
     }
 }

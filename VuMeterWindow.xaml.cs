@@ -129,4 +129,33 @@ public partial class VuMeterWindow : Window
         _animationTimer.Stop();
         base.OnClosed(e);
     }
+    
+    public void SetStatus(string status)
+    {
+        Dispatcher.Invoke(() => StatusText.Text = status);
+    }
+    
+    public void ShowProgress(bool show)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            TranscribeProgress.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (show)
+                TranscribeProgress.IsIndeterminate = true;
+            else
+                TranscribeProgress.IsIndeterminate = false;
+        });
+    }
+    
+    public void SetRecordingIndicator(bool isRecording)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            RecordingDot.Visibility = isRecording ? Visibility.Visible : Visibility.Collapsed;
+            if (!isRecording)
+            {
+                StatusText.Text = "Done";
+            }
+        });
+    }
 }

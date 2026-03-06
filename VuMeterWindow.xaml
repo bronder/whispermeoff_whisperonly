@@ -22,11 +22,12 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
             <!-- Recording indicator -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
-                <Ellipse Width="8" Height="8" Margin="0,0,6,0">
+                <Ellipse x:Name="RecordingDot" Width="8" Height="8" Margin="0,0,6,0">
                     <Ellipse.Fill>
                         <RadialGradientBrush>
                             <GradientStop Color="#FF6666" Offset="0"/>
@@ -34,11 +35,15 @@
                         </RadialGradientBrush>
                     </Ellipse.Fill>
                 </Ellipse>
-                <TextBlock Text="Recording" Foreground="#AAAAAA" FontSize="11" FontWeight="SemiBold"/>
+                <TextBlock x:Name="StatusText" Text="Recording" Foreground="#AAAAAA" FontSize="11" FontWeight="SemiBold"/>
             </StackPanel>
             
             <!-- Waveform display using Canvas -->
             <Canvas x:Name="WaveformCanvas" Grid.Row="1" ClipToBounds="True"/>
+            
+            <!-- Progress bar for transcription/enhancement -->
+            <ProgressBar x:Name="TranscribeProgress" Grid.Row="2" Height="4" Minimum="0" Maximum="100" Value="0" 
+                        Background="#444444" Foreground="#28A745" BorderThickness="0" Margin="0,4,0,0" Visibility="Collapsed"/>
         </Grid>
     </Border>
 </Window>
